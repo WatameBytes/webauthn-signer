@@ -6,6 +6,7 @@ function App() {
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [output, setOutput] = useState('');
+  const [selectedRpId, setSelectedRpId] = useState('localhost');
 
   const handleSign = async () => {
     try {
@@ -15,10 +16,15 @@ function App() {
       // Parse the input JSON
       const data = JSON.parse(jsonInput);
       
-      // Parse the publicKeyCredentialCreationOptionsJson
-      const parsedOptions = JSON.parse(data.publicKeyCredentialCreationOptionsJson);
+      // Parse the publicKeyCredentialCreationOptions and modify rpId
+      const parsedOptions = JSON.parse(data.publicKeyCredentialCreationOptions);
       
-      setStatus('Creating credentials...');
+      // Update the rpId
+      if (parsedOptions.publicKey && parsedOptions.publicKey.rp) {
+        parsedOptions.publicKey.rp.id = selectedRpId;
+      }
+      
+      setStatus('Creating credentials with rpId: ' + selectedRpId);
       
       // Create the credential using the library
       const credential = await webauthnJson.create(parsedOptions);
@@ -35,6 +41,7 @@ function App() {
       };
       
       setStatus('Signing completed successfully!');
+      
       // Create formatted output string with custom headers
       const formattedOutput = `# Header format Object version:\n${JSON.stringify(resultObject, null, 2)}\n\n# Header format String version:\n${JSON.stringify(resultString, null, 2)}`;
       setOutput(formattedOutput);
@@ -53,6 +60,20 @@ function App() {
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
+            Select Relying Party ID
+          </label>
+          <select
+            value={selectedRpId}
+            onChange={(e) => setSelectedRpId(e.target.value)}
+            className="w-full px-3 py-2 border rounded-md bg-white"
+          >
+            <option value="localhost">localhost</option>
+            <option value="webauthn-signer.vercel.app">webauthn-signer.vercel.app</option>
+          </select>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Paste your JSON here
           </label>
           <textarea
@@ -62,7 +83,7 @@ function App() {
             placeholder={`Example format:
 {
   "registrationId": "your-registration-id",
-  "publicKeyCredentialCreationOptionsJson": "your-json-string"
+  "publicKeyCredentialCreationOptions": "your-json-string"
 }`}
           />
         </div>
