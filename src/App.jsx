@@ -7,6 +7,8 @@ function App() {
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [output, setOutput] = useState('');
+  const [registrationIdField, setRegistrationIdField] = useState('registrationId');
+  const [credentialField, setCredentialField] = useState('credential');
 
   const handleSign = async () => {
     try {
@@ -24,14 +26,22 @@ function App() {
       // Create the credential using the library
       const credential = await webauthnJson.create(parsedOptions);
       
-      // Create the final result
-      const result = {
-        registrationId: data.registrationId,
-        credential: credential
+      // Create both result formats
+      const resultObject = {
+        [registrationIdField]: data.registrationId,
+        [credentialField]: credential
+      };
+
+      const resultString = {
+        [registrationIdField]: data.registrationId,
+        publicKeyCredentialString: JSON.stringify(credential)
       };
       
       setStatus('Signing completed successfully!');
-      setOutput(JSON.stringify(result, null, 2));
+      setOutput(JSON.stringify({
+        objectVersion: resultObject,
+        stringVersion: resultString
+      }, null, 2));
       
     } catch (err) {
       console.error('Error:', err);
@@ -57,6 +67,33 @@ function App() {
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              RegistrationId Field Name
+            </label>
+            <input
+              type="text"
+              value={registrationIdField}
+              onChange={(e) => setRegistrationIdField(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md"
+              placeholder="registrationId"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Credential Field Name
+            </label>
+            <input
+              type="text"
+              value={credentialField}
+              onChange={(e) => setCredentialField(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md"
+              placeholder="credential"
+            />
+          </div>
+        </div>
+
         <button
           onClick={handleSign}
           className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -77,13 +114,15 @@ function App() {
         )}
 
         {output && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Signed Result
-            </label>
-            <pre className="p-4 bg-gray-50 rounded-md overflow-auto whitespace-pre-wrap font-mono text-sm">
-              {output}
-            </pre>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Signed Results (Both Formats)
+              </label>
+              <pre className="p-4 bg-gray-50 rounded-md overflow-auto whitespace-pre-wrap font-mono text-sm">
+                {output}
+              </pre>
+            </div>
           </div>
         )}
       </div>
