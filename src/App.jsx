@@ -17,7 +17,7 @@ function App() {
       const data = JSON.parse(jsonInput);
       
       // Parse the publicKeyCredentialCreationOptions and modify rpId
-      const parsedOptions = JSON.parse(data.publicKeyCredentialCreationOptions);
+      const parsedOptions = JSON.parse(data.publicKeyCredentialCreationOptionsJson);
       
       // Update the rpId
       if (parsedOptions.publicKey && parsedOptions.publicKey.rp) {
