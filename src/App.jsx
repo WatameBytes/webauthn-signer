@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useState } from 'react';
 import * as webauthnJson from "@github/webauthn-json";
 
@@ -7,8 +6,6 @@ function App() {
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [output, setOutput] = useState('');
-  const [registrationIdField, setRegistrationIdField] = useState('registrationId');
-  const [credentialField, setCredentialField] = useState('credential');
 
   const handleSign = async () => {
     try {
@@ -18,8 +15,8 @@ function App() {
       // Parse the input JSON
       const data = JSON.parse(jsonInput);
       
-      // Parse the nested JSON string into an object
-      const parsedOptions = JSON.parse(data.publicKeyCredentialCreationOptions);
+      // Parse the publicKeyCredentialCreationOptionsJson
+      const parsedOptions = JSON.parse(data.publicKeyCredentialCreationOptionsJson);
       
       setStatus('Creating credentials...');
       
@@ -28,20 +25,19 @@ function App() {
       
       // Create both result formats
       const resultObject = {
-        [registrationIdField]: data.registrationId,
-        [credentialField]: credential
+        registrationId: data.registrationId,
+        publicKeyCredentialJson: credential
       };
 
       const resultString = {
-        [registrationIdField]: data.registrationId,
-        publicKeyCredentialString: JSON.stringify(credential)
+        registrationId: data.registrationId,
+        publicKeyCredentialJson: JSON.stringify(credential)
       };
       
       setStatus('Signing completed successfully!');
-      setOutput(JSON.stringify({
-        objectVersion: resultObject,
-        stringVersion: resultString
-      }, null, 2));
+      // Create formatted output string with custom headers
+      const formattedOutput = `# Header format Object version:\n${JSON.stringify(resultObject, null, 2)}\n\n# Header format String version:\n${JSON.stringify(resultString, null, 2)}`;
+      setOutput(formattedOutput);
       
     } catch (err) {
       console.error('Error:', err);
@@ -63,35 +59,12 @@ function App() {
             value={jsonInput}
             onChange={(e) => setJsonInput(e.target.value)}
             className="w-full h-64 p-4 border rounded-md font-mono text-sm"
-            placeholder="Paste your JSON response here..."
+            placeholder={`Example format:
+{
+  "registrationId": "your-registration-id",
+  "publicKeyCredentialCreationOptionsJson": "your-json-string"
+}`}
           />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              RegistrationId Field Name
-            </label>
-            <input
-              type="text"
-              value={registrationIdField}
-              onChange={(e) => setRegistrationIdField(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md"
-              placeholder="registrationId"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Credential Field Name
-            </label>
-            <input
-              type="text"
-              value={credentialField}
-              onChange={(e) => setCredentialField(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md"
-              placeholder="credential"
-            />
-          </div>
         </div>
 
         <button
@@ -117,7 +90,7 @@ function App() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Signed Results (Both Formats)
+                Signed Results
               </label>
               <pre className="p-4 bg-gray-50 rounded-md overflow-auto whitespace-pre-wrap font-mono text-sm">
                 {output}
