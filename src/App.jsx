@@ -1,182 +1,234 @@
-// src/App.jsx
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import * as webauthnJson from "@github/webauthn-json";
 
-function App() {
-  const [activeTab, setActiveTab] = useState('register');
-  const [jsonInput, setJsonInput] = useState('');
-  const [status, setStatus] = useState('');
-  const [error, setError] = useState('');
-  const [output, setOutput] = useState('');
+export default function App() {
+  // Track which tab is active
+  const [currentTab, setCurrentTab] = useState("register");
 
+  // ---------------------------
+  //  Registration State
+  // ---------------------------
+  const [registerJsonInput, setRegisterJsonInput] = useState("");
+  const [registerStatus, setRegisterStatus] = useState("");
+  const [registerError, setRegisterError] = useState("");
+  const [registerOutput, setRegisterOutput] = useState("");
+
+  // ---------------------------
+  //  Authentication State
+  // ---------------------------
+  const [authJsonInput, setAuthJsonInput] = useState("");
+  const [authStatus, setAuthStatus] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authOutput, setAuthOutput] = useState("");
+
+  // ---------------------------
+  //  Handlers
+  // ---------------------------
+
+  // Registration Handler (calls webauthnJson.create)
   const handleRegister = async () => {
     try {
-      setStatus('Starting WebAuthn registration...');
-      setError('');
-      
-      const data = JSON.parse(jsonInput);
+      setRegisterStatus("Starting WebAuthn registration...");
+      setRegisterError("");
+      setRegisterOutput("");
+
+      const data = JSON.parse(registerJsonInput);
+      // data.registrationId
+      // data.publicKeyCredentialCreationOptionsJson
+
       const parsedOptions = JSON.parse(data.publicKeyCredentialCreationOptionsJson);
-      
-      setStatus('Creating credentials...');
+
+      setRegisterStatus("Creating credentials...");
+
       const credential = await webauthnJson.create(parsedOptions);
-      
+
       const resultObject = {
         registrationId: data.registrationId,
-        publicKeyCredentialJson: credential
+        publicKeyCredentialJson: credential,
       };
-      
+
       const resultString = {
         registrationId: data.registrationId,
-        publicKeyCredentialJson: JSON.stringify(credential)
+        publicKeyCredentialJson: JSON.stringify(credential),
       };
-      
-      setStatus('Signing completed successfully!');
+
+      setRegisterStatus("Registration completed successfully!");
+
       const formattedOutput = `# Header format Object version:\n${JSON.stringify(resultObject, null, 2)}\n\n# Header format String version:\n${JSON.stringify(resultString, null, 2)}`;
-      setOutput(formattedOutput);
-      
+      setRegisterOutput(formattedOutput);
     } catch (err) {
-      console.error('Error:', err);
-      setError(err.message);
-      setStatus('');
+      console.error(err);
+      setRegisterError(err.message);
+      setRegisterStatus("");
     }
   };
 
+  // Authentication Handler (calls webauthnJson.get)
   const handleAuthenticate = async () => {
     try {
-      setStatus('Starting WebAuthn authentication...');
-      setError('');
-      
-      const data = JSON.parse(jsonInput);
+      setAuthStatus("Starting WebAuthn authentication...");
+      setAuthError("");
+      setAuthOutput("");
+
+      const data = JSON.parse(authJsonInput);
+      // data.assertionId
+      // data.assertionRequestJson
+
       const parsedOptions = JSON.parse(data.assertionRequestJson);
-      
-      setStatus('Getting credentials...');
+
+      setAuthStatus("Requesting credentials...");
+
       const credential = await webauthnJson.get(parsedOptions);
-      
+
       const resultObject = {
         assertionId: data.assertionId,
-        publicKeyCredentialJson: credential
+        publicKeyCredentialJson: credential,
       };
-      
+
       const resultString = {
         assertionId: data.assertionId,
-        publicKeyCredentialJson: JSON.stringify(credential)
+        publicKeyCredentialJson: JSON.stringify(credential),
       };
-      
-      setStatus('Authentication completed successfully!');
+
+      setAuthStatus("Assertion completed successfully!");
+
       const formattedOutput = `# Header format Object version:\n${JSON.stringify(resultObject, null, 2)}\n\n# Header format String version:\n${JSON.stringify(resultString, null, 2)}`;
-      setOutput(formattedOutput);
-      
+      setAuthOutput(formattedOutput);
     } catch (err) {
-      console.error('Error:', err);
-      setError(err.message);
-      setStatus('');
+      console.error(err);
+      setAuthError(err.message);
+      setAuthStatus("");
     }
   };
 
-  const getPlaceholder = () => {
-    if (activeTab === 'register') {
-      return `Example format:
-{
-  "registrationId": "your-registration-id",
-  "publicKeyCredentialCreationOptionsJson": "your-json-string"
-}`;
-    }
-    return `Example format:
-{
-  "assertionId": "your-assertion-id",
-  "assertionRequestJson": "your-json-string"
-}`;
-  };
-
+  // ---------------------------
+  //  Render
+  // ---------------------------
   return (
     <div className="p-6 max-w-2xl mx-auto">
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">WebAuthn Signer</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+        WebAuthn POC: Register &amp; Authenticate
+      </h1>
 
-        {/* Tabs */}
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex">
-            <button
-              onClick={() => {
-                setActiveTab('register');
-                setJsonInput('');
-                setOutput('');
-                setError('');
-                setStatus('');
-              }}
-              className={`py-2 px-4 ${
-                activeTab === 'register'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Register
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('authenticate');
-                setJsonInput('');
-                setOutput('');
-                setError('');
-                setStatus('');
-              }}
-              className={`ml-8 py-2 px-4 ${
-                activeTab === 'authenticate'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Authenticate
-            </button>
-          </nav>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Paste your JSON here
-          </label>
-          <textarea
-            value={jsonInput}
-            onChange={(e) => setJsonInput(e.target.value)}
-            className="w-full h-64 p-4 border rounded-md font-mono text-sm"
-            placeholder={getPlaceholder()}
-          />
-        </div>
-
+      {/* Tab selectors */}
+      <div className="flex space-x-4 mb-6">
         <button
-          onClick={activeTab === 'register' ? handleRegister : handleAuthenticate}
-          className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onClick={() => setCurrentTab("register")}
+          className={`px-4 py-2 rounded-md ${
+            currentTab === "register" ? "bg-blue-600 text-white" : "bg-gray-200"
+          }`}
         >
-          {activeTab === 'register' ? 'Register with WebAuthn' : 'Authenticate with WebAuthn'}
+          Register
         </button>
+        <button
+          onClick={() => setCurrentTab("authenticate")}
+          className={`px-4 py-2 rounded-md ${
+            currentTab === "authenticate" ? "bg-blue-600 text-white" : "bg-gray-200"
+          }`}
+        >
+          Authenticate
+        </button>
+      </div>
 
-        {status && (
-          <div className="p-4 bg-blue-50 text-blue-700 rounded-md">
-            {status}
+      {/* Registration Panel */}
+      {currentTab === "register" && (
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Registration JSON
+            </label>
+            <textarea
+              value={registerJsonInput}
+              onChange={(e) => setRegisterJsonInput(e.target.value)}
+              className="w-full h-64 p-4 border rounded-md font-mono text-sm"
+              placeholder={`Example format:
+{
+  "registrationId": "your-registration-id",
+  "publicKeyCredentialCreationOptionsJson": "{...}"
+}`}
+            />
           </div>
-        )}
+          <button
+            onClick={handleRegister}
+            className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Register (webauthnJson.create)
+          </button>
 
-        {error && (
-          <div className="p-4 bg-red-50 text-red-700 rounded-md">
-            Error: {error}
-          </div>
-        )}
+          {registerStatus && (
+            <div className="p-4 bg-blue-50 text-blue-700 rounded-md">
+              {registerStatus}
+            </div>
+          )}
 
-        {output && (
-          <div className="space-y-4">
+          {registerError && (
+            <div className="p-4 bg-red-50 text-red-700 rounded-md">
+              Error: {registerError}
+            </div>
+          )}
+
+          {registerOutput && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Signed Results
+                Registration Results
               </label>
               <pre className="p-4 bg-gray-50 rounded-md overflow-auto whitespace-pre-wrap font-mono text-sm">
-                {output}
+                {registerOutput}
               </pre>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Authentication Panel */}
+      {currentTab === "authenticate" && (
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Authentication JSON
+            </label>
+            <textarea
+              value={authJsonInput}
+              onChange={(e) => setAuthJsonInput(e.target.value)}
+              className="w-full h-64 p-4 border rounded-md font-mono text-sm"
+              placeholder={`Example format:
+{
+  "assertionId": "your-assertion-id",
+  "assertionRequestJson": "{...}"
+}`}
+            />
           </div>
-        )}
-      </div>
+          <button
+            onClick={handleAuthenticate}
+            className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Authenticate (webauthnJson.get)
+          </button>
+
+          {authStatus && (
+            <div className="p-4 bg-blue-50 text-blue-700 rounded-md">
+              {authStatus}
+            </div>
+          )}
+
+          {authError && (
+            <div className="p-4 bg-red-50 text-red-700 rounded-md">
+              Error: {authError}
+            </div>
+          )}
+
+          {authOutput && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Authentication Results
+              </label>
+              <pre className="p-4 bg-gray-50 rounded-md overflow-auto whitespace-pre-wrap font-mono text-sm">
+                {authOutput}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
-
-export default App;
